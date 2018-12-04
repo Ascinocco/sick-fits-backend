@@ -20,6 +20,10 @@ const Mutations = {
     const item = await ctx.db.query.item({ where }, `{ id title }`);
     return ctx.db.mutation.deleteItem({ where }, info);
   },
+
+  async signup(parent, args ctx, info) {
+    // @TODO
+  }
 };
 
 module.exports = Mutations;
