@@ -1,3 +1,6 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
 const Mutations = {
   async createItem(parent, args, ctx, info) {
     // TODO: check if they are logged in
@@ -21,8 +24,27 @@ const Mutations = {
     return ctx.db.mutation.deleteItem({ where }, info);
   },
 
-  async signup(parent, args ctx, info) {
-    // @TODO
+  async signup(parent, args, ctx, info) {
+    // lower case email, because users do user things
+    const email = args.email.toLowerCase();
+    const password = await bcrypt.hash(args.password, 10);
+
+    const userInfo = {
+      ...args,
+      email,
+      password,
+      permissions: { set: ['USER'] },
+    };
+
+    const user = await ctx.db.mutation.createUser({ data: userInfo }, info);
+    const token = jwt.sign({ userId: user.id }, process.env.APP_SECRET);
+    // HTTP Only makes it so that external javascript & browser extensions can't access your cookie, this is important for security
+    // we set the max age of the cookie to 1 year so that we don't get logged out
+    ctx.response.cookie('token', token, { httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 365 });
+
+    // returning user here returns the user to the browser. It seems you don't have to
+    // write an http response...?
+    return user;
   }
 };
 

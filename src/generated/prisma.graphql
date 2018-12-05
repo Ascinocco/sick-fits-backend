@@ -1,5 +1,5 @@
 # source: https://us1.prisma.sh/anthony-scinocco-e5ab68/sick-fits/dev
-# timestamp: Tue Dec 04 2018 09:11:51 GMT-0500 (Eastern Standard Time)
+# timestamp: Wed Dec 05 2018 08:25:24 GMT-0500 (Eastern Standard Time)
 
 type AggregateItem {
   count: Int!
@@ -504,7 +504,7 @@ type User implements Node {
   password: String!
   resetToken: String
   resetTokenExpiry: Float
-  permission: [Permission!]!
+  permissions: [Permission!]!
 }
 
 """A connection to a list of items."""
@@ -523,10 +523,10 @@ input UserCreateInput {
   password: String!
   resetToken: String
   resetTokenExpiry: Float
-  permission: UserCreatepermissionInput
+  permissions: UserCreatepermissionsInput
 }
 
-input UserCreatepermissionInput {
+input UserCreatepermissionsInput {
   set: [Permission!]
 }
 
@@ -565,7 +565,7 @@ type UserPreviousValues {
   password: String!
   resetToken: String
   resetTokenExpiry: Float
-  permission: [Permission!]!
+  permissions: [Permission!]!
 }
 
 type UserSubscriptionPayload {
@@ -613,7 +613,7 @@ input UserUpdateInput {
   password: String
   resetToken: String
   resetTokenExpiry: Float
-  permission: UserUpdatepermissionInput
+  permissions: UserUpdatepermissionsInput
 }
 
 input UserUpdateManyMutationInput {
@@ -622,10 +622,10 @@ input UserUpdateManyMutationInput {
   password: String
   resetToken: String
   resetTokenExpiry: Float
-  permission: UserUpdatepermissionInput
+  permissions: UserUpdatepermissionsInput
 }
 
-input UserUpdatepermissionInput {
+input UserUpdatepermissionsInput {
   set: [Permission!]
 }
 
