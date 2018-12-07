@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const { randomBytes } = require('crypto');
 const { promisify } = require('util');
+const { transport, makeANiceEmail } = require('../mail');
 
 const generateToken = require('../lib/generateToken');
 const TOKEN_COOKIE_PARAMS = {
@@ -98,8 +99,20 @@ const Mutations = {
       data: { resetToken, resetTokenExpiry },
     });
 
+    // this could be wrapped in a try catch to handle if the error failed
+    const mailRes = await transport.sendMail({
+      from: 'anthony@mail.io',
+      to: user.email,
+      subject: 'Your password reset token',
+      html: makeANiceEmail(`
+        Your password reset token has arrived!
+        <a href="${process.env.FRONTEND_URL}/reset?resetToken=${resetToken}">
+          Click here to reset.
+        </a>
+      `),
+    });
+    
     return { message: 'Thanks!' };
-    // email reset token
   },
 
   async resetPassword(parent, args, ctx, info) {
