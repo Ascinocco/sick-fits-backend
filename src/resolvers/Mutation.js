@@ -12,7 +12,21 @@ const TOKEN_COOKIE_PARAMS = {
 const Mutations = {
   async createItem(parent, args, ctx, info) {
     // TODO: check if they are logged in
-    const item = await ctx.db.mutation.createItem({ data: { ...args } }, info);
+    if (!ctx.request.userId) {
+      throw new Error('You must be logged in to do that!');
+    }
+
+    const item = await ctx.db.mutation.createItem({
+      data: {
+        ...args,
+        // this is how we create relationships between the item and the user
+        user: {
+          connect: {
+            id: ctx.request.userId,
+          },
+        },
+      },
+    },info);
     return item;
   },
   updateItem(parent, args, ctx, info) {
