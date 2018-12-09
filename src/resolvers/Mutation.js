@@ -222,7 +222,7 @@ const Mutations = {
         data: { quantity: existingCartItem.quantity + 1 },
         where: { id: existingCartItem.id }
       }, info);
-    }
+    } 
 
     const result = await ctx.db.mutation.createCartItem({
       data: {
@@ -232,7 +232,19 @@ const Mutations = {
     }, info);
     console.log('RESULT', result);
     return result;
-  }
+  },
+  async removeFromCart(parent, args, ctx, info) {
+    const cartItem = await ctx.db.query.cartItem({
+      where: { id: args.id },
+    },`{ id, user { id } }`);
+
+    if (!cartItem) throw new Error('No Cart Item Found!');
+    if (cartItem.user.id !== ctx.request.userId) throw new Error('You do not have the permission to delete this item');
+
+    return await ctx.db.mutation.deleteCartItem({
+      where: { id: args.id },
+    }, info);
+  },
 };
 
 module.exports = Mutations;
