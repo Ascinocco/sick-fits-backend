@@ -202,6 +202,36 @@ const Mutations = {
       data: { permissions: { set: args.permissions } },
       where: { id: args.userId },
     }, info)
+  },
+
+  async addToCart(parent, args, ctx, info) {
+    const { userId } = ctx.request;
+    if (!userId) {
+      throw new Error('You must be signed in');
+    }
+
+    const [existingCartItem] = await ctx.db.query.cartItems({
+      where: {
+        user: { id: userId },
+        item: { id: args.id },
+      },
+    });
+
+    if (existingCartItem) {
+      return await ctx.db.mutation.updateCartItem({
+        data: { quantity: existingCartItem.quantity + 1 },
+        where: { id: existingCartItem.id }
+      }, info);
+    }
+
+    const result = await ctx.db.mutation.createCartItem({
+      data: {
+        user: { connect: { id: userId } },
+        item: { connect: { id: args.id } }
+      },
+    }, info);
+    console.log('RESULT', result);
+    return result;
   }
 };
 
