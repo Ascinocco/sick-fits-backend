@@ -3,6 +3,7 @@ const { randomBytes } = require('crypto');
 const { promisify } = require('util');
 const { transport, makeANiceEmail } = require('../mail');
 const { hasPermission } = require('../utils');
+const stripe = require('../stripe');
 
 const generateToken = require('../lib/generateToken');
 const TOKEN_COOKIE_PARAMS = {
@@ -245,6 +246,51 @@ const Mutations = {
       where: { id: args.id },
     }, info);
   },
+  async createOrder(parent, args, ctx, info) {
+    // validate user
+    const { userId } = ctx.request;
+    if (!userId) throw new Error('You must be signed in to complete this order');
+    const user = await ctx.db.query.user(
+      { where: { id: userId } },
+      `{id name email cart { id quantity item { title price id description image largeImage }}}`,
+    );
+    // recalculate total price in case users try to edit price on client
+    const amount = user.cart.reduce((tally, cartItem) => tally + cartItem.item.price * cartItem.quantity, 0);
+    console.log('AMOUNT IS:  ===  ', amount);
+    // create stripe charge (turn token into $$$)
+    const charge = await stripe.charges.create({ // check the strip doc's for more options
+      amount,
+      currency: 'USD',
+      source: args.token,
+    });
+
+    // convert cart items to order items
+    const orderItems = user.cart.map((cartItem) => {
+      const orderItem = {
+        ...cartItem.item,
+        quantity: cartItem.quantity,
+        user: { connect: { id: userId }},
+      };
+      delete orderItem.id;
+      return orderItem;
+    })
+
+    // create the order
+    const order = await ctx.db.mutation.createOrder({
+      data: {
+        total: charge.amount,
+        charge: charge.id,
+        items: { create: orderItems },
+        user: { connect: { id: userId } },
+      }
+    }); // you can catch the error here with a .catch
+    // clean up - clear users cart, delete cart items
+    const cartItemIds = user.cart.map(cartItem => cartItem.id);
+    await ctx.db.mutation.deleteManyCartItems({ where: { id_in: cartItemIds } });
+
+    // return the order to the client
+    return order;
+  }
 };
 
 module.exports = Mutations;
