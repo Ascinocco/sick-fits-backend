@@ -42,6 +42,17 @@ const Query = {
       throw new Error('You cant see this budd');
     }
     return order;
+  },
+
+  async orders(parent, args, ctx, info) {
+    const { userId } = ctx.request;
+    if (!userId) {
+      throw new Error('Get yo self authenticated fool');
+    }
+
+    return await ctx.db.query.orders({
+      where: { user: { id: userId } }
+    }, info);
   }
 };
 
